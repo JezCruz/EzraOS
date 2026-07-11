@@ -63,7 +63,11 @@ def create_modes(name: str) -> dict[str, dict[str, str]]:
     return {
         "general": {
             "label": "General Chat",
-            "greeting": f"Hello, {name}. General Chat Mode is ready.",
+            "greeting": (
+                f"Hello, {name}. General Chat Mode is ready.\n"
+                "Ask me about everyday questions, explanations, writing, "
+                "planning, and general learning."
+            ),
             "system": (
                 f"You are Ezra, the personal offline assistant of {name}. "
                 "Reply clearly and concisely. Use simple English or natural "
@@ -73,7 +77,11 @@ def create_modes(name: str) -> dict[str, dict[str, str]]:
         },
         "java": {
             "label": "Java Programming",
-            "greeting": f"Hello, {name}. Java Programming Mode is ready.",
+            "greeting": (
+                f"Hello, {name}. Java Programming Mode is ready.\n"
+                "Ask me about Java syntax, variables, loops, OOP, debugging, "
+                "projects, and practice exercises."
+            ),
             "system": (
                 f"You are Ezra, {name}'s patient Java tutor. "
                 "Teach one concept at a time. Use correct and runnable Java "
@@ -83,7 +91,11 @@ def create_modes(name: str) -> dict[str, dict[str, str]]:
         },
         "python": {
             "label": "Python Programming",
-            "greeting": f"Hello, {name}. Python Programming Mode is ready.",
+            "greeting": (
+                f"Hello, {name}. Python Programming Mode is ready.\n"
+                "Ask me about Python basics, functions, data structures, "
+                "debugging, scripts, and practice exercises."
+            ),
             "system": (
                 f"You are Ezra, {name}'s Python tutor. "
                 "Use runnable beginner-friendly examples. Explain errors "
@@ -92,7 +104,11 @@ def create_modes(name: str) -> dict[str, dict[str, str]]:
         },
         "sql": {
             "label": "SQL Learning",
-            "greeting": f"Hello, {name}. SQL Learning Mode is ready.",
+            "greeting": (
+                f"Hello, {name}. SQL Learning Mode is ready.\n"
+                "Ask me about queries, tables, joins, filtering, databases, "
+                "and SQL practice."
+            ),
             "system": (
                 f"You are Ezra, {name}'s SQL tutor. "
                 "Use practical tables, queries, and expected results. "
@@ -101,7 +117,11 @@ def create_modes(name: str) -> dict[str, dict[str, str]]:
         },
         "git": {
             "label": "Git and GitHub",
-            "greeting": f"Hello, {name}. Git and GitHub Mode is ready.",
+            "greeting": (
+                f"Hello, {name}. Git and GitHub Mode is ready.\n"
+                "Ask me about commits, branches, pushing, pulling, merging, "
+                "and fixing Git errors."
+            ),
             "system": (
                 f"You are Ezra, {name}'s Git assistant. "
                 "Give safe commands and explain what each command changes. "
@@ -110,7 +130,11 @@ def create_modes(name: str) -> dict[str, dict[str, str]]:
         },
         "linux": {
             "label": "Linux and Termux",
-            "greeting": f"Hello, {name}. Linux and Termux Mode is ready.",
+            "greeting": (
+                f"Hello, {name}. Linux and Termux Mode is ready.\n"
+                "Ask me about commands, packages, files, permissions, scripts, "
+                "and Termux setup."
+            ),
             "system": (
                 f"You are Ezra, {name}'s Linux and Termux assistant. "
                 "Prefer Android-compatible Termux commands. Do not suggest "
@@ -119,7 +143,11 @@ def create_modes(name: str) -> dict[str, dict[str, str]]:
         },
         "bible": {
             "label": "Bible Study",
-            "greeting": f"Hello, {name}. Bible Study Mode is ready.",
+            "greeting": (
+                f"Hello, {name}. Bible Study Mode is ready.\n"
+                "Ask me about Scripture, biblical context, Christian faith, "
+                "devotion, and personal application."
+            ),
             "system": (
                 f"You are Ezra, {name}'s careful Bible study assistant. "
                 "Separate Bible text, explanation, historical context, and "
