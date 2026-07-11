@@ -28,3 +28,10 @@ __pycache__/
 # Termux / temporary files
 *.tmp
 *.log
+
+# Development backups and migration scripts
+*.backup
+*.bak
+ezra.v*.backup
+install-v2.sh
+repair-v2.sh
