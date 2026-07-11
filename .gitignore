@@ -1,37 +1,31 @@
-# Personal settings
+# Personal user data
 data/user_name.txt
 data/history/
 data/notes.txt
 
-# Runtime files
+# Runtime data
 runtime/
 logs/
 
-# Models and caches
+# Local AI models
 models/
 *.gguf
 .cache/
 
-# Backups
-*.backup
-*.bak
-ezra.v1.backup
-ezra.v1.1.backup
-ezra.before-clean-ui
-repair-v2.sh
-install-v2.sh
-
-# Python
+# Python cache
 __pycache__/
 *.pyc
 
-# Termux / temporary files
-*.tmp
-*.log
-
-# Development backups and migration scripts
+# Development backups
 *.backup
 *.bak
 ezra.v*.backup
+
+# Internal migration / repair scripts
 install-v2.sh
 repair-v2.sh
+clean-public-release.sh
+
+# Temporary files
+*.tmp
+*.log
