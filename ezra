@@ -1,42 +1,231 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-BASE_DIR="$HOME/EzraOS"
-CONFIG_DIR="$BASE_DIR/config"
-CONFIG_FILE="$CONFIG_DIR/model.conf"
+BASE="$HOME/EzraOS"
+NAME_FILE="$BASE/data/user_name.txt"
 
 BLUE='\033[1;34m'
 CYAN='\033[1;36m'
 WHITE='\033[1;37m'
 GRAY='\033[0;37m'
-RED='\033[1;31m'
 RESET='\033[0m'
 
-mkdir -p "$CONFIG_DIR" "$BASE_DIR/data"
+mkdir -p "$BASE/data"
 
-DEFAULT_MODEL="Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
-
-if [ ! -f "$CONFIG_FILE" ]; then
-    printf '%s\n' "$DEFAULT_MODEL" > "$CONFIG_FILE"
-fi
-
-get_model() {
-    cat "$CONFIG_FILE"
+get_user_name() {
+    if [ -s "$NAME_FILE" ]; then
+        cat "$NAME_FILE"
+    else
+        echo "User"
+    fi
 }
 
-set_model() {
-    printf '%s\n' "$1" > "$CONFIG_FILE"
-}
+first_run_setup() {
+    if [ -s "$NAME_FILE" ]; then
+        return
+    fi
 
-pause_screen() {
-    echo
-    read -r -p "Press Enter to continue..."
-}
-
-show_header() {
     clear
 
-    printf "${BLUE}"
-    cat << 'LOGO'
+    printf "${BLUE}EZRA OS FIRST-TIME SETUP${RESET}\n\n"
+    printf "${WHITE}Welcome to EzraOS.${RESET}\n\n"
+
+    while true; do
+        read -r -p "What is your name? " entered_name
+
+        # Remove leading and trailing spaces.
+        entered_name="$(
+            printf '%s' "$entered_name" |
+            sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+        )"
+
+        if [ -n "$entered_name" ]; then
+            printf '%s\n' "$entered_name" > "$NAME_FILE"
+            break
+        fi
+
+        echo "Please enter a valid name."
+    done
+
+    echo
+    printf "${CYAN}Welcome, %s.${RESET}\n" "$entered_name"
+    printf "${GRAY}EzraOS will remember your name.${RESET}\n"
+    sleep 2
+}
+
+start_mode() {
+    local mode="$1"
+    local label="$2"
+    local user_name
+
+    user_name="$(get_user_name)"
+
+    clear
+    printf "${BLUE}Starting EzraOS${RESET}\n\n"
+    printf "${WHITE}Hello, %s.${RESET}\n" "$user_name"
+    printf "${WHITE}Selected mode:${RESET} ${CYAN}%s${RESET}\n" \
+        "$label"
+    printf "${WHITE}Preparing AI server...${RESET}\n"
+
+    if ! "$BASE/core/server.sh" start; then
+        echo
+        read -r -p "Press Enter..."
+        return
+    fi
+
+    clear
+    python "$BASE/core/chat.py" "$mode"
+}
+
+coding_menu() {
+    while true; do
+        clear
+        printf "${BLUE}CODING MODE${RESET}\n\n"
+        echo "[1] Java"
+        echo "[2] Python"
+        echo "[3] SQL"
+        echo "[4] Git and GitHub"
+        echo "[5] Linux and Termux"
+        echo "[0] Back"
+        echo
+
+        read -r -p "Select > " choice
+
+        case "$choice" in
+            1)
+                start_mode java "Java Programming"
+                ;;
+            2)
+                start_mode python "Python Programming"
+                ;;
+            3)
+                start_mode sql "SQL Learning"
+                ;;
+            4)
+                start_mode git "Git and GitHub"
+                ;;
+            5)
+                start_mode linux "Linux and Termux"
+                ;;
+            0)
+                return
+                ;;
+            *)
+                echo "Invalid option."
+                sleep 1
+                ;;
+        esac
+    done
+}
+
+change_name() {
+    local current_name
+    local new_name
+
+    current_name="$(get_user_name)"
+
+    clear
+    printf "${BLUE}CHANGE USER NAME${RESET}\n\n"
+    printf "Current name: ${CYAN}%s${RESET}\n\n" "$current_name"
+
+    read -r -p "Enter new name: " new_name
+
+    new_name="$(
+        printf '%s' "$new_name" |
+        sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+    )"
+
+    if [ -z "$new_name" ]; then
+        echo "Name was not changed."
+        sleep 1
+        return
+    fi
+
+    printf '%s\n' "$new_name" > "$NAME_FILE"
+
+    echo
+    printf "${CYAN}Name changed to %s.${RESET}\n" "$new_name"
+    sleep 2
+}
+
+settings_menu() {
+    while true; do
+        clear
+        printf "${BLUE}SETTINGS${RESET}\n\n"
+        printf "User: ${CYAN}%s${RESET}\n\n" "$(get_user_name)"
+
+        echo "[1] Change user name"
+        echo "[2] Start AI server"
+        echo "[3] Stop AI server"
+        echo "[4] Restart AI server"
+        echo "[5] View server log"
+        echo "[6] Clear all chat history"
+        echo "[0] Back"
+        echo
+
+        read -r -p "Select > " choice
+
+        case "$choice" in
+            1)
+                change_name
+                ;;
+            2)
+                "$BASE/core/server.sh" start
+                echo
+                read -r -p "Press Enter..."
+                ;;
+            3)
+                "$BASE/core/server.sh" stop
+                echo "AI server stopped."
+                sleep 1
+                ;;
+            4)
+                "$BASE/core/server.sh" restart
+                echo
+                read -r -p "Press Enter..."
+                ;;
+            5)
+                clear
+
+                if [ -s "$BASE/logs/server.log" ]; then
+                    tail -n 50 "$BASE/logs/server.log"
+                else
+                    echo "No server log yet."
+                fi
+
+                echo
+                read -r -p "Press Enter..."
+                ;;
+            6)
+                read -r -p "Type CLEAR to confirm: " confirm
+
+                if [ "$confirm" = "CLEAR" ]; then
+                    rm -f "$BASE/data/history/"*.json
+                    echo "Chat history cleared."
+                    sleep 1
+                fi
+                ;;
+            0)
+                return
+                ;;
+            *)
+                echo "Invalid option."
+                sleep 1
+                ;;
+        esac
+    done
+}
+
+main_menu() {
+    first_run_setup
+
+    while true; do
+        local user_name
+        user_name="$(get_user_name)"
+
+        clear
+
+        printf "${BLUE}"
+        cat <<'LOGO'
 ███████╗███████╗██████╗  █████╗
 ██╔════╝╚══███╔╝██╔══██╗██╔══██╗
 █████╗    ███╔╝ ██████╔╝███████║
@@ -44,266 +233,58 @@ show_header() {
 ███████╗███████╗██║  ██║██║  ██║
 ╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
 LOGO
-    printf "${RESET}\n"
+        printf "${RESET}\n"
 
-    printf "${WHITE}Offline AI Development Suite${RESET}\n"
-    printf "${BLUE}Version${RESET}   : ${CYAN}1.1.0${RESET}\n"
-    printf "${BLUE}User${RESET}      : ${CYAN}Jez${RESET}\n"
-    printf "${BLUE}Model${RESET}     : ${CYAN}%s${RESET}\n" "$(get_model)"
-    printf "${BLUE}Date${RESET}      : ${CYAN}%s${RESET}\n" "$(date '+%a %b %d %Y')"
-    printf "${BLUE}Time${RESET}      : ${CYAN}%s${RESET}\n" "$(date '+%I:%M %p')"
-    printf "${BLUE}Memory${RESET}    : ${CYAN}%s${RESET}\n" \
-        "$(free -h | awk '/Mem:/ {print $3 " / " $2}')"
-    printf "${BLUE}Storage${RESET}   : ${CYAN}%s free${RESET}\n" \
-        "$(df -h "$HOME" | awk 'NR==2 {print $4}')"
+        printf "${WHITE}Offline AI Development Environment${RESET}\n"
+        printf "${BLUE}Version${RESET} : ${CYAN}2.1.0${RESET}\n"
+        printf "${BLUE}User${RESET}    : ${CYAN}%s${RESET}\n" \
+            "$user_name"
+        printf "${BLUE}Server${RESET}  : ${CYAN}%s${RESET}\n" \
+            "$("$BASE/core/server.sh" status)"
+        printf "${BLUE}Memory${RESET}  : ${CYAN}%s${RESET}\n" \
+            "$(free -h | awk '/Mem:/ {print $3 " / " $2}')"
+        printf "${BLUE}Storage${RESET} : ${CYAN}%s free${RESET}\n" \
+            "$(df -h "$HOME" | awk 'NR==2 {print $4}')"
 
-    echo
-    printf "${BLUE}------------------------------------------------${RESET}\n"
-}
-
-run_ai() {
-    local system_prompt="$1"
-    local model
-    local status
-
-    model="$(get_model)"
-
-    clear
-    printf "${BLUE}EZRA AI${RESET}\n"
-    printf "${GRAY}Loading model. The first launch may download about 1 GB.${RESET}\n\n"
-
-    llama-cli \
-        -hf "$model" \
-        -c 1024 \
-        -t 4 \
-        -b 256 \
-        -ub 128 \
-        -cnv \
-        --temp 0.4 \
-        --top-p 0.85 \
-        --repeat-penalty 1.15 \
-        --system-prompt "$system_prompt"
-
-    status=$?
-
-    if [ "$status" -ne 0 ]; then
         echo
-        printf "${RED}Ezra encountered an error. Exit code: %s${RESET}\n" "$status"
-        printf "${GRAY}Check your internet connection during the first download.${RESET}\n"
-        pause_screen
-    fi
-}
-
-chat_mode() {
-    run_ai "You are Ezra, a helpful offline assistant. Reply clearly and briefly. Use simple English or natural Taglish. Never invent Tagalog words. Admit when you are uncertain."
-}
-
-coding_mode() {
-    while true; do
-        clear
-        printf "${BLUE}CODING MODE${RESET}\n\n"
-        printf "${WHITE}[1] Java${RESET}\n"
-        printf "${WHITE}[2] Python${RESET}\n"
-        printf "${WHITE}[3] SQL${RESET}\n"
-        printf "${WHITE}[4] Git${RESET}\n"
-        printf "${WHITE}[5] Linux and Termux${RESET}\n"
-        printf "${WHITE}[0] Back${RESET}\n\n"
-
-        read -r -p "Select > " choice
-
-        case "$choice" in
-            1) topic="Java programming" ;;
-            2) topic="Python programming" ;;
-            3) topic="SQL" ;;
-            4) topic="Git and GitHub" ;;
-            5) topic="Linux and Termux" ;;
-            0) return ;;
-            *)
-                echo "Invalid option."
-                sleep 1
-                continue
-                ;;
-        esac
-
-        run_ai "You are Ezra, a patient tutor specializing in $topic. Teach beginners using short explanations and practical examples. Reply in simple English or natural Taglish. Never invent Tagalog words. When writing code, use correct formatting and explain important lines."
-    done
-}
-
-model_manager() {
-    while true; do
-        clear
-        printf "${BLUE}MODEL MANAGER${RESET}\n\n"
-        printf "${WHITE}Current model:${RESET}\n"
-        printf "${CYAN}%s${RESET}\n\n" "$(get_model)"
-
-        printf "${WHITE}[1] Qwen2.5-Coder 1.5B Q4_K_M${RESET}\n"
-        printf "${GRAY}    Best choice for coding. About 1 GB.${RESET}\n\n"
-
-        printf "${WHITE}[2] Qwen2.5 0.5B Q4_K_M${RESET}\n"
-        printf "${GRAY}    Faster and lighter. About 400 MB.${RESET}\n\n"
-
-        printf "${WHITE}[3] Test current model${RESET}\n"
-        printf "${WHITE}[0] Back${RESET}\n\n"
+        printf "${BLUE}--------------------------------------------${RESET}\n"
+        echo "[1] General Chat"
+        echo "[2] Coding Mode"
+        echo "[3] Bible Study"
+        echo "[4] Projects"
+        echo "[5] Notes"
+        echo "[6] System Information"
+        echo "[7] Settings"
+        echo "[0] Exit"
+        printf "${BLUE}--------------------------------------------${RESET}\n"
 
         read -r -p "Select > " choice
 
         case "$choice" in
             1)
-                set_model "Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K_M"
-                echo
-                echo "Coder 1.5B selected."
-                echo "It will download automatically when first opened."
-                pause_screen
+                start_mode general "General Chat"
                 ;;
             2)
-                set_model "Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M"
-                echo
-                echo "General 0.5B selected."
-                pause_screen
+                coding_menu
                 ;;
             3)
-                run_ai "Reply only with: Ezra model test successful."
+                start_mode bible "Bible Study"
                 ;;
-            0)
-                return
+            4)
+                "$BASE/modules/projects.sh"
                 ;;
-            *)
-                echo "Invalid option."
-                sleep 1
+            5)
+                "$BASE/modules/notes.sh"
                 ;;
-        esac
-    done
-}
-
-projects_mode() {
-    clear
-    printf "${BLUE}PROJECTS${RESET}\n\n"
-
-    found=0
-
-    while IFS= read -r git_dir; do
-        repo_dir="${git_dir%/.git}"
-        repo_name="$(basename "$repo_dir")"
-        branch="$(git -C "$repo_dir" branch --show-current 2>/dev/null)"
-
-        printf "${CYAN}%-24s${RESET} ${GRAY}%s${RESET}\n" \
-            "$repo_name" "${branch:-no branch}"
-
-        found=1
-    done < <(find "$HOME" -maxdepth 3 -type d -name .git 2>/dev/null)
-
-    if [ "$found" -eq 0 ]; then
-        printf "${GRAY}No Git repositories found.${RESET}\n"
-    fi
-
-    pause_screen
-}
-
-notes_mode() {
-    local notes_file="$BASE_DIR/data/notes.txt"
-    touch "$notes_file"
-
-    while true; do
-        clear
-        printf "${BLUE}NOTES${RESET}\n\n"
-        printf "${WHITE}[1] View notes${RESET}\n"
-        printf "${WHITE}[2] Add note${RESET}\n"
-        printf "${WHITE}[0] Back${RESET}\n\n"
-
-        read -r -p "Select > " choice
-
-        case "$choice" in
-            1)
-                clear
-                printf "${BLUE}YOUR NOTES${RESET}\n\n"
-
-                if [ -s "$notes_file" ]; then
-                    cat "$notes_file"
-                else
-                    echo "No notes yet."
-                fi
-
-                pause_screen
+            6)
+                "$BASE/modules/system.sh"
                 ;;
-            2)
-                echo
-                read -r -p "Write note: " note
-
-                if [ -n "$note" ]; then
-                    printf "[%s] %s\n" \
-                        "$(date '+%Y-%m-%d %H:%M')" \
-                        "$note" >> "$notes_file"
-
-                    echo "Note saved."
-                else
-                    echo "Empty note was not saved."
-                fi
-
-                sleep 1
+            7)
+                settings_menu
                 ;;
-            0)
-                return
-                ;;
-            *)
-                echo "Invalid option."
-                sleep 1
-                ;;
-        esac
-    done
-}
-
-system_mode() {
-    clear
-    printf "${BLUE}SYSTEM INFO${RESET}\n\n"
-
-    printf "${WHITE}Device${RESET}       : %s\n" \
-        "$(getprop ro.product.manufacturer) $(getprop ro.product.model)"
-    printf "${WHITE}Architecture${RESET} : %s\n" "$(uname -m)"
-    printf "${WHITE}Kernel${RESET}       : %s\n" "$(uname -r)"
-    printf "${WHITE}Android${RESET}      : %s\n" \
-        "$(getprop ro.build.version.release)"
-    printf "${WHITE}RAM${RESET}          : %s\n" \
-        "$(free -h | awk '/Mem:/ {print $3 " used / " $2 " total"}')"
-    printf "${WHITE}Storage${RESET}      : %s\n" \
-        "$(df -h "$HOME" | awk 'NR==2 {print $3 " used / " $2 " total"}')"
-    printf "${WHITE}llama.cpp${RESET}    : %s\n" \
-        "$(command -v llama-cli >/dev/null && echo Installed || echo Missing)"
-    printf "${WHITE}Active model${RESET} : %s\n" "$(get_model)"
-
-    pause_screen
-}
-
-bible_mode() {
-    run_ai "You are Ezra, a careful Bible study assistant. Clearly separate Bible text, explanation, and personal application. Do not claim that your explanation is inspired or infallible. Reply in simple English or natural Taglish."
-}
-
-main_menu() {
-    while true; do
-        show_header
-
-        printf "${WHITE}[1] Chat with Ezra${RESET}\n"
-        printf "${WHITE}[2] Coding Mode${RESET}\n"
-        printf "${WHITE}[3] Bible Study${RESET}\n"
-        printf "${WHITE}[4] Projects${RESET}\n"
-        printf "${WHITE}[5] Notes${RESET}\n"
-        printf "${WHITE}[6] System Info${RESET}\n"
-        printf "${WHITE}[7] Model Manager${RESET}\n"
-        printf "${WHITE}[0] Exit${RESET}\n\n"
-
-        printf "${BLUE}------------------------------------------------${RESET}\n"
-        read -r -p "Select > " choice
-
-        case "$choice" in
-            1) chat_mode ;;
-            2) coding_mode ;;
-            3) bible_mode ;;
-            4) projects_mode ;;
-            5) notes_mode ;;
-            6) system_mode ;;
-            7) model_manager ;;
             0)
                 clear
-                printf "${BLUE}EzraOS closed.${RESET}\n"
+                printf "${BLUE}Goodbye, %s.${RESET}\n" "$user_name"
                 exit 0
                 ;;
             *)
