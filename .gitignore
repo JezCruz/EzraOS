@@ -1,0 +1,30 @@
+# Personal settings
+data/user_name.txt
+data/history/
+data/notes.txt
+
+# Runtime files
+runtime/
+logs/
+
+# Models and caches
+models/
+*.gguf
+.cache/
+
+# Backups
+*.backup
+*.bak
+ezra.v1.backup
+ezra.v1.1.backup
+ezra.before-clean-ui
+repair-v2.sh
+install-v2.sh
+
+# Python
+__pycache__/
+*.pyc
+
+# Termux / temporary files
+*.tmp
+*.log
